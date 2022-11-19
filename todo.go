@@ -32,7 +32,8 @@ func (todo *Todo) Add(task string) {
 
 func (todo *Todo) Complete(index int) error {
 	ls := *todo
-	if index > 0 && index < len(ls) {
+	index--
+	if index < 0 && index < len(ls) {
 		return errors.New("Không tìm thấy công việc")
 	}
 	ls[index].Done = true
@@ -82,53 +83,50 @@ func (todo *Todo) Print() {
 	table := simpletable.New()
 	table.Header = &simpletable.Header{
 		Cells: []*simpletable.Cell{
-			{Align: simpletable.AlignCenter,Text:"#"},
-			{Align: simpletable.AlignCenter,Text:"Task"},
-			{Align: simpletable.AlignCenter,Text: "Done?"},
-			{Align: simpletable.AlignCenter,Text: "Created At"},
-			{Align: simpletable.AlignCenter,Text: "Completed At"}
+			{Align: simpletable.AlignCenter, Text: "#"},
+			{Align: simpletable.AlignCenter, Text: "Task"},
+			{Align: simpletable.AlignCenter, Text: "Done?"},
+			{Align: simpletable.AlignCenter, Text: "Created At"},
+			{Align: simpletable.AlignCenter, Text: "Completed At"},
 		},
 	}
 	var cells [][]*simpletable.Cell
-	for idx,item := range *todo{
+	for idx, item := range *todo {
 		idx++
 		task := blue(item.Task)
 		done := blue("no")
-		if item.Done{
+		complete := ""
+		if item.Done {
 			done = green("yes")
-			task = green(fmt.Sprintf("\u2705 %s",item.Task))
+			task = green(fmt.Sprintf("\u2705 %s", item.Task))
+			complete = item.CompletedAt.Format(time.RFC822)
 		}
-		cells = append(cells, &simpletable.Cell{
-			{Text: fmt.Sprintf("%d",idx)},
-			{Text : task},
-			{Text:item.Done},
-			{Text: item.Done},
+		cells = append(cells, *&[]*simpletable.Cell{
+			{Text: fmt.Sprintf("%d", idx)},
+			{Text: task},
+			{Text: done},
 			{Text: item.CreatedAt.Format(time.RFC822)},
-			{Text:item.CompletedAt.Format(time.RFC822)}
+			{Text: complete},
 		})
 
 	}
 
 	table.Body = &simpletable.Body{Cells: cells}
-	table.Footer = & simpletable.Footer{
+	table.Footer = &simpletable.Footer{
 		Cells: []*simpletable.Cell{
-			{
-				Align: simpletable.AlignCenter,
-				Span: 5 , 
-				Text:red(fmt.Sprintf("Bạn có %d công việc cần hoàn thành",todo.CountPending()))
-			}
+			{Align: simpletable.AlignCenter, Span: 5, Text: red(fmt.Sprintf("Bạn có %d công việc cần hoàn thành", todo.CountPending()))},
 		},
 	}
-	table.Print()
+	table.SetStyle(simpletable.StyleUnicode)
+	table.Println()
 }
 
-
-func (todo *Todo) CountPending() int{
-	result =0;
-	for item := range *todo{
-		if(!item.Done){
+func (todo *Todo) CountPending() int {
+	var result = 0
+	for _, item := range *todo {
+		if !item.Done {
 			result++
 		}
 	}
-	return result;
+	return result
 }
